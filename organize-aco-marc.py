@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 
-from pymarc import parse_xml_to_array, marcxml
+from pymarc import parse_xml_to_array, map_xml, MARCWriter
 
 import argparse
 import glob
@@ -63,6 +63,22 @@ def merge_xml(input_paths, output_path):
     do_cmd(['xmllint', '--noout',
         '--schema', marcxml_schema, output_path])
 
+def save_as_marc(marcxml_files):
+    for marcxml_file in marcxml_files:
+        records = parse_xml_to_array(marcxml_file)
+        logging.debug(f"number of {len(records)}")
+        for record in records:
+            logging.debug(record.leader)
+            print(record.as_marc())
+
+# https://www.oahelper.org/2018/09/06/pymarc-python-marc-record-processing-convert-marcxml-to-marc/
+def xml2mrc(input_xml_file, output_mrc_file=None):
+    if not output_mrc_file:
+        output_mrc_file = input_xml_file.replace('.xml', '.mrc')
+    writer = MARCWriter(open(output_mrc_file, 'wb'))
+    records = map_xml(writer.write, input_xml_file)
+    writer.close()
+
 
 parser = argparse.ArgumentParser(
     description="Organize all ACO marc records in one place.")
@@ -103,6 +119,10 @@ for marc_dir in marc_dirs:
 
     merge_xml(marc_files, out_xml)
 
+    xml2mrc(out_xml)
+
+
+    #save_as_marc(marc_files)
 
 
 #     for marc_file in marc_files:
